@@ -1,0 +1,829 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Beyond Flat Labels: Level-Restricted Contrastive Learning for Hierarchical Fine-Grained Vision Classification</title>
+<meta name="description" content="Level-restricted contrastive learning fixes hierarchically inconsistent predictions in CLIP-style vision-language models by contrasting labels only within the same taxonomic level. Fine-tuned from BioCLIP on TreeOfLife-10M, it raises average per-level zero-shot accuracy on iNat21 from 48.49% to 78.96%. CVPR 2026 FGVC Workshop.">
+<meta name="keywords" content="level-restricted contrastive learning, hierarchical classification, hierarchical consistency, fine-grained visual classification, CLIP, vision-language models, zero-shot classification, taxonomy, false negatives, hyperbolic embeddings, BioCLIP, BioCLIP-HC, TreeOfLife-10M, iNat21, biodiversity, species classification">
+<meta name="author" content="Zhiyuan Tao, Srikumar Sastry, Matthew J Thompson, Elizabeth G Campolongo, Net Zhang, Ziheng Zhang, Hilmar Lapp, Yu Su, Tanya Berger-Wolf, Nathan Jacobs, Wei-Lun Chao, Jianyang Gu">
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+<link rel="canonical" href="https://zhiyuantao623.github.io/beyond-flat-labels/">
+<link rel="alternate" type="text/markdown" href="llms-full.txt" title="Full plain-text summary for language models">
+<link rel="alternate" type="text/plain" href="llms.txt" title="llms.txt">
+
+<!-- Scholarly metadata (Google Scholar / Zotero / Semantic Scholar) -->
+<meta name="citation_title" content="Beyond Flat Labels: Level-Restricted Contrastive Learning for Hierarchical Fine-Grained Vision Classification">
+<meta name="citation_author" content="Tao, Zhiyuan">
+<meta name="citation_author" content="Sastry, Srikumar">
+<meta name="citation_author" content="Thompson, Matthew J">
+<meta name="citation_author" content="Campolongo, Elizabeth G">
+<meta name="citation_author" content="Zhang, Net">
+<meta name="citation_author" content="Zhang, Ziheng">
+<meta name="citation_author" content="Lapp, Hilmar">
+<meta name="citation_author" content="Su, Yu">
+<meta name="citation_author" content="Berger-Wolf, Tanya">
+<meta name="citation_author" content="Jacobs, Nathan">
+<meta name="citation_author" content="Chao, Wei-Lun">
+<meta name="citation_author" content="Gu, Jianyang">
+<meta name="citation_publication_date" content="2026/06/20">
+<meta name="citation_online_date" content="2026/06/20">
+<meta name="citation_conference_title" content="CVPR 2026 Workshop on Fine-Grained Visual Categorization (FGVC)">
+<meta name="citation_arxiv_id" content="2606.21838">
+<meta name="citation_doi" content="10.48550/arXiv.2606.21838">
+<meta name="citation_abstract_html_url" content="https://arxiv.org/abs/2606.21838">
+<meta name="citation_pdf_url" content="https://arxiv.org/pdf/2606.21838">
+<meta name="citation_language" content="en">
+
+<!-- Social cards -->
+<meta property="og:type" content="article">
+<meta property="og:title" content="Beyond Flat Labels: Level-Restricted Contrastive Learning for Hierarchical Fine-Grained Vision Classification">
+<meta property="og:description" content="Contrast labels only within the same taxonomic level. +30.47 points average accuracy over BioCLIP on iNat21, with hierarchically consistent predictions in Euclidean and hyperbolic space.">
+<meta property="og:url" content="https://zhiyuantao623.github.io/beyond-flat-labels/">
+<meta property="og:image" content="https://zhiyuantao623.github.io/beyond-flat-labels/assets/og.png">
+<meta property="og:image:alt" content="Level-restricted contrastive learning: image and taxonomic text embeddings are contrasted separately at each taxonomic level, and the per-level losses are averaged.">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b6b58'/%3E%3Crect x='6' y='8' width='20' height='4' rx='2' fill='%23fff'/%3E%3Crect x='9' y='14' width='14' height='4' rx='2' fill='%23fff'/%3E%3Crect x='12' y='20' width='8' height='4' rx='2' fill='%23fff'/%3E%3C/svg%3E">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ScholarlyArticle",
+  "headline": "Beyond Flat Labels: Level-Restricted Contrastive Learning for Hierarchical Fine-Grained Vision Classification",
+  "name": "Beyond Flat Labels: Level-Restricted Contrastive Learning for Hierarchical Fine-Grained Vision Classification",
+  "url": "https://zhiyuantao623.github.io/beyond-flat-labels/",
+  "sameAs": ["https://arxiv.org/abs/2606.21838", "https://doi.org/10.48550/arXiv.2606.21838"],
+  "identifier": [
+    {"@type": "PropertyValue", "propertyID": "arXiv", "value": "2606.21838"},
+    {"@type": "PropertyValue", "propertyID": "DOI", "value": "10.48550/arXiv.2606.21838"}
+  ],
+  "datePublished": "2026-06-20",
+  "dateModified": "2026-09-28",
+  "inLanguage": "en",
+  "isAccessibleForFree": true,
+  "license": "https://creativecommons.org/licenses/by/4.0/",
+  "publication": {"@type": "PublicationEvent", "name": "CVPR 2026 Workshop on Fine-Grained Visual Categorization (FGVC)"},
+  "image": "https://zhiyuantao623.github.io/beyond-flat-labels/assets/og.png",
+  "author": [
+    {"@type": "Person", "name": "Zhiyuan Tao", "affiliation": {"@type": "Organization", "name": "The Ohio State University"}},
+    {"@type": "Person", "name": "Srikumar Sastry", "affiliation": {"@type": "Organization", "name": "Washington University in St. Louis"}},
+    {"@type": "Person", "name": "Matthew J Thompson", "affiliation": {"@type": "Organization", "name": "The Ohio State University"}},
+    {"@type": "Person", "name": "Elizabeth G Campolongo", "affiliation": {"@type": "Organization", "name": "The Ohio State University"}},
+    {"@type": "Person", "name": "Net Zhang", "affiliation": {"@type": "Organization", "name": "The Ohio State University"}},
+    {"@type": "Person", "name": "Ziheng Zhang", "affiliation": {"@type": "Organization", "name": "The Ohio State University"}},
+    {"@type": "Person", "name": "Hilmar Lapp", "affiliation": {"@type": "Organization", "name": "Neuromatch"}},
+    {"@type": "Person", "name": "Yu Su", "affiliation": {"@type": "Organization", "name": "The Ohio State University"}},
+    {"@type": "Person", "name": "Tanya Berger-Wolf", "affiliation": {"@type": "Organization", "name": "The Ohio State University"}},
+    {"@type": "Person", "name": "Nathan Jacobs", "affiliation": {"@type": "Organization", "name": "Washington University in St. Louis"}},
+    {"@type": "Person", "name": "Wei-Lun Chao", "affiliation": {"@type": "Organization", "name": "Boston University"}},
+    {"@type": "Person", "name": "Jianyang Gu", "affiliation": {"@type": "Organization", "name": "The Ohio State University"}}
+  ],
+  "keywords": "level-restricted contrastive learning, hierarchical classification, hierarchical consistency, fine-grained visual classification, CLIP, vision-language models, zero-shot classification, taxonomy, false negatives, hyperbolic embeddings, BioCLIP, TreeOfLife-10M, iNat21, biodiversity",
+  "about": ["Contrastive learning", "Hierarchical classification", "Vision-language models", "Fine-grained visual categorization", "Biodiversity informatics"],
+  "abstract": "Multimodal contrastive learning has enabled zero-shot visual classification by aligning images with textual categories. However, in hierarchically structured label spaces, existing methods often produce predictions that are inconsistent across taxonomic levels. For example, a model may predict a fine-grained category whose parent category contradicts its simultaneously predicted higher-level label. By analysis, the issue originates from false negative labels when contrastive comparison involves multiple taxonomic levels. To this end, we propose to restrict contrastive comparisons to categories within the same taxonomic level. In addition, we adopt a group-balanced design, ensuring each taxonomic level receives adequate optimization. As a result, the proposed framework improves both hierarchical consistency and classification accuracy from coarse to fine granularity. We train our model with TreeOfLife-10M based on BioCLIP and evaluate it across multiple hierarchical classification benchmarks, where the model demonstrates significantly improved hierarchical consistency in both Euclidean and hyperbolic spaces. Notably, on iNaturalist 2021 (iNat21), our method improves average accuracy across levels by 30.47% over the baseline, highlighting its effectiveness for hierarchical zero-shot classification. We have released our Euclidean and hyperbolic models on HuggingFace."
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type": "Question", "name": "What is level-restricted contrastive learning?",
+     "acceptedAnswer": {"@type": "Answer", "text": "It is a CLIP-style training objective for hierarchical label spaces. Each image gets one text label per taxonomic level (kingdom through species), and the contrastive loss is computed separately at each level, so a label is only ever compared with other labels of the same level. The per-level losses are then averaged with equal weight."}},
+    {"@type": "Question", "name": "Why do CLIP-style models make hierarchically inconsistent predictions?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Standard contrastive learning assumes a flat, mutually exclusive label space and treats every non-matching text as an equal negative. When labels from several taxonomic levels share one contrastive objective, semantically compatible labels, such as an ancestor of the true class, are pushed away as false negatives. A lion and a wolf differ at species and genus level but share the order Carnivora, so there is no consistent way to define negatives across levels."}},
+    {"@type": "Question", "name": "How is this different from RCME, MERU and other hyperbolic or entailment-based methods?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Those approaches add geometry objectives or hierarchy-oriented architectures. Level-restricted contrastive learning changes only how negatives are defined in the contrastive objective, and it applies in both Euclidean and hyperbolic embedding spaces. Against RCME, which also fine-tunes BioCLIP on TreeOfLife-10M, the best variant is more than 13 points higher in average accuracy on iNat21, Rare Species and CrypticBio."}},
+    {"@type": "Question", "name": "Is hyperbolic space required?",
+     "acceptedAnswer": {"@type": "Answer", "text": "No. The Euclidean model reaches 78.96% average accuracy on iNat21 and the hyperbolic model 78.95%. The hyperbolic variant is stronger on Rare Species, CrypticBio and under top-down constrained inference (normalized LCA 0.71 versus 0.69)."}},
+    {"@type": "Question", "name": "Does balancing all taxonomic levels hurt species-level accuracy?",
+     "acceptedAnswer": {"@type": "Answer", "text": "No. On iNat21, species-level top-1 accuracy rises from 50.79% for BioCLIP to 63.00% for the Euclidean model. Species accuracy also improves on Rare Species (31.82% to 43.20%) and CrypticBio (36.72% to 49.98%) with the hyperbolic model."}},
+    {"@type": "Question", "name": "Where can I download the models?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Both models are on Hugging Face under the MIT license: imageomics/bioclip-hc-euclidean and imageomics/bioclip-hc-hyperbolic. They load with OpenCLIP via the hf-hub: prefix."}}
+  ]
+}
+</script>
+
+<style>
+:root{
+  --bg:#faf9f5; --surface:#ffffff; --ink:#191917; --ink-2:#4f4e4a; --muted:#7d7b74; --line:#e3e1d9;
+  --accent:#0b6b58; --accent-ink:#ffffff; --accent-soft:#e4f1ec;
+  --code-bg:#f1efe8;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --ref:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Consolas,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#11120f; --surface:#1a1a19; --ink:#f3f2ec; --ink-2:#c3c2b7; --muted:#918f88; --line:#2c2c2a;
+    --accent:#5cc6ab; --accent-ink:#0b1412; --accent-soft:#16302a;
+    --code-bg:#20211d;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --ref:#898781;
+    --grid:#2c2c2a; --axis:#383835;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 var(--sans)}
+a{color:var(--accent);text-underline-offset:3px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.wrap{max-width:920px;margin:0 auto;padding-left:20px;padding-right:20px}
+.skip{position:absolute;left:-999px}
+.skip:focus{left:12px;top:12px;background:var(--surface);padding:8px 12px;z-index:10}
+
+/* nav */
+nav.top{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav.top .wrap{display:flex;gap:4px 18px;flex-wrap:wrap;align-items:center;padding-top:10px;padding-bottom:10px;font-size:14px}
+section[id],header[id]{scroll-margin-top:56px}
+nav.top a{color:var(--ink-2);text-decoration:none}
+nav.top a:hover{color:var(--accent)}
+nav.top .brand{font-weight:650;color:var(--ink);margin-right:auto}
+
+/* hero */
+header.hero{padding-top:56px;padding-bottom:8px}
+.venue{display:inline-block;font-size:13px;font-weight:650;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);padding:5px 12px;border-radius:999px}
+h1{font-family:var(--serif);font-weight:600;font-size:clamp(30px,5.2vw,48px);line-height:1.13;letter-spacing:-.012em;margin:18px 0 22px;text-wrap:balance}
+h1 em{font-style:normal;color:var(--accent)}
+.authors{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:2px 16px;font-size:16.5px}
+.authors sup,.affil sup{font-size:.68em;color:var(--muted);margin-left:1px}
+.affil{margin:10px 0 0;color:var(--ink-2);font-size:14.5px}
+.affil span{white-space:nowrap;margin-right:14px}
+.btns{display:flex;flex-wrap:wrap;gap:10px;margin:26px 0 0}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-decoration:none;font-size:15px;font-weight:550;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08);color:var(--accent-ink)}
+
+/* sections */
+section{padding-top:48px;padding-bottom:4px}
+h2{font-family:var(--serif);font-weight:600;font-size:clamp(24px,3.4vw,31px);line-height:1.2;margin:0 0 14px;letter-spacing:-.008em}
+h3{font-size:17px;margin:26px 0 6px}
+p{margin:0 0 14px}
+.lede{font-size:clamp(18px,2.3vw,20.5px);line-height:1.55;color:var(--ink)}
+.small{font-size:14.5px;color:var(--ink-2)}
+.eyebrow{font-size:12.5px;font-weight:650;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+
+/* stat tiles */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:26px 0 0}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px}
+.stat b{display:block;font-size:34px;line-height:1.1;font-weight:650;letter-spacing:-.02em}
+.stat .lab{display:block;font-size:14px;color:var(--ink-2);margin-top:8px;line-height:1.45}
+.stat .lab strong{color:var(--ink);font-weight:600}
+
+/* compare cards */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0 8px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
+.card h3{margin:0 0 4px}
+.card .sub{font-size:14px;color:var(--ink-2);margin:0 0 12px}
+.cands{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.cands li{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:14px}
+.cands code{font-size:13px;background:none;padding:0}
+.tag{flex:none;font-size:12px;font-weight:650;border-radius:999px;padding:2px 9px;border:1px solid var(--line);color:var(--ink-2);white-space:nowrap}
+.tag.pos{background:var(--accent-soft);border-color:transparent;color:var(--accent)}
+.tag.bad{background:#fbe6e3;border-color:transparent;color:#a3271f}
+@media (prefers-color-scheme:dark){.tag.bad{background:#3a1b18;color:#f0958c}}
+.lvl{font-size:12px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:12px 0 6px}
+.lvl:first-of-type{margin-top:0}
+
+/* figures */
+figure{margin:22px 0}
+figure img{display:block;width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px}
+figcaption{font-size:14.5px;color:var(--ink-2);margin-top:10px}
+figcaption b{color:var(--ink)}
+
+/* ladder */
+.ladder{list-style:none;margin:16px 0 6px;padding:0;display:grid;gap:5px;font-family:var(--mono);font-size:13px}
+.ladder li{display:grid;grid-template-columns:74px 1fr;gap:10px;align-items:center}
+.ladder .rk{font-family:var(--sans);font-size:12px;font-weight:650;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.ladder .tx{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:7px;padding:5px 10px;overflow-wrap:anywhere}
+.ladder .tx i{font-style:normal;color:var(--muted)}
+
+/* steps */
+.steps{counter-reset:s;list-style:none;margin:18px 0;padding:0;display:grid;gap:12px}
+.steps>li{counter-increment:s;position:relative;padding-left:46px}
+.steps>li::before{content:counter(s);position:absolute;left:0;top:1px;width:30px;height:30px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:15px;display:grid;place-items:center}
+.steps b{display:block}
+
+/* math */
+.eq{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 12px;margin:14px 0;overflow-x:auto}
+math{font-size:1.06em}
+
+/* chart */
+.viz{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 18px 12px;margin:20px 0}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px;color:var(--ink-2);margin:0 0 10px;padding:0;list-style:none}
+.legend li{display:flex;align-items:center;gap:7px}
+.key{width:22px;height:0;border-top:2px solid;position:relative;flex:none}
+.key::after{content:"";position:absolute;left:7px;top:-5px;width:8px;height:8px;border-radius:50%;background:currentColor}
+.key.s1{color:var(--s1)}.key.s2{color:var(--s2)}.key.s3{color:var(--s3)}.key.ref{color:var(--ref)}
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.panel h3{margin:0;font-size:15px}
+.panel p{margin:0 0 6px;font-size:13px;color:var(--muted)}
+.plot{position:relative;min-height:240px;touch-action:pan-y}
+.plot svg{display:block;width:100%;overflow:visible}
+.plot text{font:12px var(--sans);fill:var(--muted);font-variant-numeric:tabular-nums}
+.plot .grid{stroke:var(--grid);stroke-width:1}
+.plot .base{stroke:var(--axis);stroke-width:1}
+.plot .ln{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.plot .pt{stroke:var(--surface);stroke-width:2}
+.plot .s1{stroke:var(--s1)}.plot .s2{stroke:var(--s2)}.plot .s3{stroke:var(--s3)}.plot .ref{stroke:var(--ref)}
+.plot .pt.s1{fill:var(--s1);stroke:var(--surface)}.plot .pt.s2{fill:var(--s2);stroke:var(--surface)}.plot .pt.s3{fill:var(--s3);stroke:var(--surface)}.plot .pt.ref{fill:var(--ref);stroke:var(--surface)}
+.plot .cross{stroke:var(--axis);stroke-width:1;visibility:hidden}
+.tip{position:absolute;top:6px;pointer-events:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 6px 22px rgba(0,0,0,.13);padding:8px 10px;font-size:13px;line-height:1.5;min-width:172px;visibility:hidden;z-index:2}
+.tip b{display:block;margin-bottom:2px}
+.tip div{display:flex;align-items:center;gap:7px;color:var(--ink-2)}
+.tip div span:last-child{margin-left:auto;color:var(--ink);font-variant-numeric:tabular-nums;font-weight:600}
+.tip .dot{width:8px;height:8px;border-radius:50%;flex:none}
+.dot.s1{background:var(--s1)}.dot.s2{background:var(--s2)}.dot.s3{background:var(--s3)}.dot.ref{background:var(--ref)}
+
+/* tables */
+.tbl{overflow-x:auto;margin:18px 0;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;font-variant-numeric:tabular-nums}
+caption{caption-side:top;text-align:left;padding:14px 16px 10px;font-size:14.5px;color:var(--ink-2)}
+caption b{color:var(--ink)}
+th,td{padding:8px 12px;text-align:right;white-space:nowrap}
+th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}
+thead th{font-size:12.5px;font-weight:650;letter-spacing:.03em;color:var(--muted);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+tbody tr+tr td,tbody tr+tr th{border-top:1px solid var(--line)}
+tbody th{font-weight:600}
+tr.ours td,tr.ours th{background:var(--accent-soft)}
+td.best{font-weight:700}
+td.avg,th.avg{border-left:1px solid var(--line)}
+
+/* code */
+pre{background:var(--code-bg);border:1px solid var(--line);border-radius:14px;padding:16px;overflow-x:auto;font:13.5px/1.6 var(--mono);margin:14px 0}
+code{font-family:var(--mono);font-size:.92em;background:var(--code-bg);padding:1px 5px;border-radius:5px}
+pre code{background:none;padding:0;font-size:inherit}
+.cite{position:relative}
+.cite .btn{position:absolute;right:10px;top:10px;padding:5px 11px;font-size:13px}
+
+/* faq */
+details{border-top:1px solid var(--line);padding:14px 0}
+details:last-of-type{border-bottom:1px solid var(--line)}
+summary{cursor:pointer;font-weight:600;font-size:17px;list-style:none;display:flex;gap:12px;align-items:baseline}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"+";color:var(--accent);font-weight:700;width:14px;flex:none}
+details[open] summary::before{content:"–"}
+details p{margin:10px 0 0 26px;color:var(--ink-2)}
+
+ul.plain{padding-left:20px;margin:0 0 14px}
+ul.plain li{margin-bottom:6px}
+.topics{display:flex;flex-wrap:wrap;gap:8px;list-style:none;padding:0;margin:14px 0 0}
+.topics li{font-size:13.5px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 12px;color:var(--ink-2)}
+footer{margin-top:56px;border-top:1px solid var(--line);padding:26px 0 48px;font-size:14px;color:var(--ink-2)}
+
+@media (max-width:720px){
+  body{font-size:16px}
+  header.hero{padding-top:36px}
+  section{padding-top:38px}
+  .stats,.compare,.panels{grid-template-columns:1fr}
+  nav.top .brand{flex-basis:100%}
+  .ladder li{grid-template-columns:1fr;gap:2px}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<nav class="top" aria-label="Sections">
+  <div class="wrap">
+    <a class="brand" href="#top">Beyond Flat Labels</a>
+    <a href="#abstract">Abstract</a>
+    <a href="#problem">Problem</a>
+    <a href="#method">Method</a>
+    <a href="#results">Results</a>
+    <a href="#models">Models</a>
+    <a href="#faq">FAQ</a>
+    <a href="#cite">Cite</a>
+  </div>
+</nav>
+
+<main id="main">
+<article itemscope itemtype="https://schema.org/ScholarlyArticle">
+
+<header class="hero wrap" id="top">
+  <span class="venue">CVPR 2026 · FGVC Workshop</span>
+  <h1 itemprop="headline">Beyond Flat Labels: <em>Level-Restricted Contrastive Learning</em> for Hierarchical Fine-Grained Vision Classification</h1>
+
+  <ul class="authors" aria-label="Authors">
+    <li>Zhiyuan Tao<sup>1†</sup></li>
+    <li>Srikumar Sastry<sup>2</sup></li>
+    <li>Matthew J Thompson<sup>1</sup></li>
+    <li>Elizabeth G Campolongo<sup>1</sup></li>
+    <li>Net Zhang<sup>1</sup></li>
+    <li>Ziheng Zhang<sup>1</sup></li>
+    <li>Hilmar Lapp<sup>3</sup></li>
+    <li>Yu Su<sup>1</sup></li>
+    <li>Tanya Berger-Wolf<sup>1</sup></li>
+    <li>Nathan Jacobs<sup>2</sup></li>
+    <li>Wei-Lun Chao<sup>4</sup></li>
+    <li>Jianyang Gu<sup>1†</sup></li>
+  </ul>
+  <p class="affil">
+    <span><sup>1</sup> The Ohio State University</span>
+    <span><sup>2</sup> Washington University in St. Louis</span>
+    <span><sup>3</sup> Neuromatch</span>
+    <span><sup>4</sup> Boston University</span>
+    <span><sup>†</sup> Correspondence: {tao.623, gu.1220}@osu.edu</span>
+  </p>
+
+  <div class="btns">
+    <a class="btn primary" href="https://arxiv.org/abs/2606.21838">Paper · arXiv:2606.21838</a>
+    <a class="btn" href="https://arxiv.org/pdf/2606.21838">PDF</a>
+    <a class="btn" href="https://huggingface.co/imageomics/bioclip-hc-euclidean">Model · Euclidean</a>
+    <a class="btn" href="https://huggingface.co/imageomics/bioclip-hc-hyperbolic">Model · Hyperbolic</a>
+    <a class="btn" href="#cite">BibTeX</a>
+  </div>
+</header>
+
+<section class="wrap" id="tldr" aria-labelledby="tldr-h">
+  <p class="eyebrow" id="tldr-h">In one paragraph</p>
+  <p class="lede">CLIP-style models often predict a species whose genus, family or order contradicts what the same model predicts at those higher levels. We trace this to <strong>false negatives that appear when labels from different taxonomic levels share one contrastive objective</strong>, and fix it by contrasting each label only against labels of the <strong>same level</strong>, with every level weighted equally. Fine-tuning BioCLIP this way on TreeOfLife-10M makes zero-shot predictions far more accurate at every level and far more consistent along the taxonomy, in both Euclidean and hyperbolic embedding spaces.</p>
+
+  <div class="stats">
+    <div class="stat">
+      <b>78.96%</b>
+      <span class="lab">average top-1 accuracy over seven taxonomic levels on iNat21, up from <strong>48.49%</strong> for BioCLIP (<strong>+30.47 points</strong>)</span>
+    </div>
+    <div class="stat">
+      <b>0.71</b>
+      <span class="lab">normalized LCA under top-down inference on iNat21, versus <strong>0.43</strong> for RCME and <strong>0.32</strong> for BioCLIP</span>
+    </div>
+    <div class="stat">
+      <b>+13 points</b>
+      <span class="lab">or more in average accuracy over RCME on each of <strong>iNat21, Rare Species and CrypticBio</strong></span>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" id="abstract">
+  <h2>Abstract</h2>
+  <p itemprop="abstract">Multimodal contrastive learning has enabled zero-shot visual classification by aligning images with textual categories. However, in hierarchically structured label spaces, existing methods often produce predictions that are inconsistent across taxonomic levels. For example, a model may predict a fine-grained category whose parent category contradicts its simultaneously predicted higher-level label. By analysis, the issue originates from false negative labels when contrastive comparison involves multiple taxonomic levels. To this end, we propose to restrict contrastive comparisons to categories within the same taxonomic level. In addition, we adopt a group-balanced design, ensuring each taxonomic level receives adequate optimization. As a result, the proposed framework improves both hierarchical consistency and classification accuracy from coarse to fine granularity. We train our model with TreeOfLife-10M based on BioCLIP and evaluate it across multiple hierarchical classification benchmarks, where the model demonstrates significantly improved hierarchical consistency in both Euclidean and hyperbolic spaces. Notably, on iNaturalist 2021 (iNat21), our method improves average accuracy across levels by 30.47% over the baseline, highlighting its effectiveness for hierarchical zero-shot classification. We have released our <a href="https://huggingface.co/imageomics/bioclip-hc-euclidean">Euclidean</a> and <a href="https://huggingface.co/imageomics/bioclip-hc-hyperbolic">hyperbolic</a> models on HuggingFace.</p>
+</section>
+
+<section class="wrap" id="problem">
+  <h2>The problem: a flat loss on a hierarchical label space</h2>
+  <p>Standard CLIP-style contrastive learning assumes labels are flat and mutually exclusive: an image and its own text form the positive pair, and every other text in the batch is an equal negative. Taxonomies break that assumption. A lion (<i>Panthera leo</i>) and a wolf (<i>Canis lupus</i>) are different species and different genera, yet both belong to the order <i>Carnivora</i>. Whether two samples should be pulled together or pushed apart depends on the level you ask about.</p>
+  <p>When labels from several levels are mixed in one contrastive objective, there is no consistent way to define negatives. Labels that are semantically compatible with an image, such as its own ancestors, end up being pushed away. The model receives conflicting supervision, and its predictions at different levels stop agreeing with each other.</p>
+
+  <div class="compare">
+    <div class="card">
+      <h3>Flat comparison</h3>
+      <p class="sub">One softmax over labels from every level. Image: a lion.</p>
+      <ul class="cands">
+        <li><code>…, Felidae, Panthera, leo</code><span class="tag pos">✓ positive</span></li>
+        <li><code>…, Canidae, Canis, lupus</code><span class="tag">negative</span></li>
+        <li><code>…, Mammalia, Carnivora</code><span class="tag bad">✕ false negative</span></li>
+      </ul>
+      <p class="small" style="margin:12px 0 0">The order-level label came from a wolf image in the batch, so it is treated as a negative, even though the lion is also a carnivoran.</p>
+    </div>
+    <div class="card">
+      <h3>Level-restricted comparison</h3>
+      <p class="sub">One softmax per level. Same lion, same batch.</p>
+      <p class="lvl">Order level</p>
+      <ul class="cands">
+        <li><code>…, Mammalia, Carnivora</code><span class="tag pos">✓ positive</span></li>
+      </ul>
+      <p class="lvl">Species level</p>
+      <ul class="cands">
+        <li><code>…, Felidae, Panthera, leo</code><span class="tag pos">✓ positive</span></li>
+        <li><code>…, Canidae, Canis, lupus</code><span class="tag">negative</span></li>
+      </ul>
+      <p class="small" style="margin:12px 0 0">Within one level, labels are mutually exclusive, so the contrastive objective is well defined again.</p>
+    </div>
+  </div>
+  <p class="small">Illustration of the lion and wolf example from the paper's introduction.</p>
+</section>
+
+<section class="wrap" id="method">
+  <h2>Method: level-restricted contrastive learning</h2>
+
+  <figure>
+    <img src="assets/method.png" width="1800" height="806" loading="lazy"
+         alt="Diagram of level-restricted contrastive learning. Images pass through an image encoder to produce image embeddings. For each image, text labels are built at every taxonomic level (kingdom, phylum, through species) and passed through a text encoder. A separate contrastive loss is computed at each level: at the kingdom level, images are grouped under Kingdom A or Kingdom B; at the phylum level under Phylum A or Phylum B; at the species level each image has its own species. The per-level losses are combined into one total loss.">
+    <figcaption><b>Level-restricted contrastive learning.</b> For each image, we construct taxonomic text labels at all hierarchical levels and encode images and texts using CLIP encoders. Instead of comparing text labels from all levels jointly, we constrain the contrastive comparison to be <em>within the same level</em>. This removes cross-level false negatives and enables balanced supervision across hierarchy levels.</figcaption>
+  </figure>
+
+  <ol class="steps">
+    <li><b>One text label per level, built from the taxonomy prefix.</b>
+      For a taxonomy with <i>L</i> levels, an image with labels (<i>t</i><sup>1</sup>, …, <i>t</i><sup><i>L</i></sup>) gets <i>L</i> texts, where the level-ℓ text contains the prefix up to that level, formatted as “An image of <i>t</i><sup>1</sup>, <i>t</i><sup>2</sup>, …, <i>t</i><sup>ℓ</sup>”.
+      <ul class="ladder" aria-label="Example: cumulative taxonomic text labels for a gray wolf">
+        <li><span class="rk">Kingdom</span><span class="tx">An image of Animalia</span></li>
+        <li><span class="rk">Phylum</span><span class="tx"><i>An image of Animalia, </i>Chordata</span></li>
+        <li><span class="rk">Class</span><span class="tx"><i>An image of Animalia, Chordata, </i>Mammalia</span></li>
+        <li><span class="rk">Order</span><span class="tx"><i>An image of Animalia, Chordata, Mammalia, </i>Carnivora</span></li>
+        <li><span class="rk">Family</span><span class="tx"><i>An image of Animalia, Chordata, Mammalia, Carnivora, </i>Canidae</span></li>
+        <li><span class="rk">Genus</span><span class="tx"><i>An image of Animalia, Chordata, Mammalia, Carnivora, Canidae, </i>Canis</span></li>
+        <li><span class="rk">Species</span><span class="tx"><i>An image of Animalia, Chordata, Mammalia, Carnivora, Canidae, Canis, </i>lupus</span></li>
+      </ul>
+    </li>
+    <li><b>Contrast only within a level.</b>
+      A separate contrastive loss is computed for each level, and each loss involves only that level's labels. A species label is compared only with other species labels, an order label only with other order labels.</li>
+    <li><b>Merge duplicate labels in the batch.</b>
+      At coarse levels many images in a mini-batch share a label (two species from the same kingdom). The labels of a level are deduplicated into a set 𝒦 of unique text embeddings, and every image that carries a label counts as a positive for it, so the same label is never both a positive and a negative.</li>
+    <li><b>Balance the levels.</b>
+      The final loss is the plain average of the per-level losses. Equal weight keeps fine-grained levels from being drowned out by high-confidence coarse-level signals.</li>
+  </ol>
+
+  <h3>Objective</h3>
+  <p>With image embedding <b>v</b><sub><i>i</i></sub>, its level-ℓ text embedding <b>z</b><sub><i>i</i></sub>, batch size <i>N</i>, temperature τ, and 𝒦 the set of unique text embeddings at that level, the image-to-text loss is</p>
+  <div class="eq">
+    <math display="block" aria-label="Image-to-text loss">
+      <semantics>
+        <mrow>
+          <msup><mi>ℒ</mi><mrow><mi>I</mi><mo>→</mo><mi>T</mi></mrow></msup>
+          <mo>=</mo><mo>−</mo>
+          <mfrac><mn>1</mn><mi>N</mi></mfrac>
+          <munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>N</mi></munderover>
+          <mi>log</mi>
+          <mfrac>
+            <mrow><mi>exp</mi><mo>(</mo><mo>⟨</mo><msub><mi>𝐯</mi><mi>i</mi></msub><mo>,</mo><msub><mi>𝐳</mi><mi>i</mi></msub><mo>⟩</mo><mo>/</mo><mi>τ</mi><mo>)</mo></mrow>
+            <mrow><munder><mo>∑</mo><mrow><msub><mi>𝐳</mi><mi>k</mi></msub><mo>∈</mo><mi>𝒦</mi></mrow></munder><mi>exp</mi><mo>(</mo><mo>⟨</mo><msub><mi>𝐯</mi><mi>i</mi></msub><mo>,</mo><msub><mi>𝐳</mi><mi>k</mi></msub><mo>⟩</mo><mo>/</mo><mi>τ</mi><mo>)</mo></mrow>
+          </mfrac>
+        </mrow>
+        <annotation encoding="application/x-tex">\mathcal{L}^{I\rightarrow T} = -\frac{1}{N}\sum_{i=1}^{N} \log \frac{\exp(\langle \mathbf{v}_i,\mathbf{z}_i\rangle/\tau)}{\sum_{\mathbf{z}_k \in \mathcal{K}} \exp(\langle \mathbf{v}_i,\mathbf{z}_k\rangle/\tau)}</annotation>
+      </semantics>
+    </math>
+  </div>
+  <p>For the text-to-image direction, let 𝒫<sub><i>k</i></sub> be the images whose label is <b>z</b><sub><i>k</i></sub> and <i>s</i><sub><i>jk</i></sub> = ⟨<b>v</b><sub><i>j</i></sub>, <b>z</b><sub><i>k</i></sub>⟩/τ. Averaging over each label's positives mitigates category-frequency imbalance within the mini-batch:</p>
+  <div class="eq">
+    <math display="block" aria-label="Text-to-image loss">
+      <semantics>
+        <mrow>
+          <msup><mi>ℒ</mi><mrow><mi>T</mi><mo>→</mo><mi>I</mi></mrow></msup>
+          <mo>=</mo><mo>−</mo>
+          <mfrac><mn>1</mn><mrow><mo>|</mo><mi>𝒦</mi><mo>|</mo></mrow></mfrac>
+          <munder><mo>∑</mo><mrow><msub><mi>𝐳</mi><mi>k</mi></msub><mo>∈</mo><mi>𝒦</mi></mrow></munder>
+          <mfrac><mn>1</mn><mrow><mo>|</mo><msub><mi>𝒫</mi><mi>k</mi></msub><mo>|</mo></mrow></mfrac>
+          <munder><mo>∑</mo><mrow><msub><mi>𝐯</mi><mi>p</mi></msub><mo>∈</mo><msub><mi>𝒫</mi><mi>k</mi></msub></mrow></munder>
+          <mi>log</mi>
+          <mfrac>
+            <mrow><mi>exp</mi><mo>(</mo><msub><mi>s</mi><mrow><mi>p</mi><mi>k</mi></mrow></msub><mo>)</mo></mrow>
+            <mrow><munderover><mo>∑</mo><mrow><mi>j</mi><mo>=</mo><mn>1</mn></mrow><mi>N</mi></munderover><mi>exp</mi><mo>(</mo><msub><mi>s</mi><mrow><mi>j</mi><mi>k</mi></mrow></msub><mo>)</mo></mrow>
+          </mfrac>
+        </mrow>
+        <annotation encoding="application/x-tex">\mathcal{L}^{T\rightarrow I} = -\frac{1}{|\mathcal{K}|}\sum_{\mathbf{z}_k \in \mathcal{K}} \frac{1}{|\mathcal{P}_k|}\sum_{\mathbf{v}_p \in \mathcal{P}_k} \log \frac{\exp(s_{pk})}{\sum_{j=1}^{N}\exp(s_{jk})}</annotation>
+      </semantics>
+    </math>
+  </div>
+  <p>The level objective is ℒ<sub>ℓ</sub> = ℒ<sub>ℓ</sub><sup><i>I</i>→<i>T</i></sup> + ℒ<sub>ℓ</sub><sup><i>T</i>→<i>I</i></sup>, and the training objective averages the levels:</p>
+  <div class="eq">
+    <math display="block" aria-label="Total loss">
+      <semantics>
+        <mrow>
+          <mi>ℒ</mi><mo>=</mo>
+          <mfrac><mn>1</mn><mi>L</mi></mfrac>
+          <munderover><mo>∑</mo><mrow><mi>ℓ</mi><mo>=</mo><mn>1</mn></mrow><mi>L</mi></munderover>
+          <msub><mi>ℒ</mi><mi>ℓ</mi></msub>
+        </mrow>
+        <annotation encoding="application/x-tex">\mathcal{L} = \frac{1}{L}\sum_{\ell=1}^{L}\mathcal{L}_{\ell}</annotation>
+      </semantics>
+    </math>
+  </div>
+
+  <h3>Euclidean and hyperbolic variants</h3>
+  <p>The same objective is trained in two embedding spaces. The Euclidean model uses the usual inner-product similarity. The hyperbolic model uses the Lorentz (hyperboloid) model with fixed curvature <i>c</i> = 1: encoder outputs are not ℓ<sub>2</sub>-normalized, they are scaled by learnable scalars and lifted onto the manifold with the exponential map at the origin, following MERU. Similarity is the negative oxy-angle divided by the temperature, used in both training and zero-shot inference.</p>
+
+  <h3>Training setup</h3>
+  <ul class="plain">
+    <li>Initialization: BioCLIP ViT-B/16, fine-tuned on TreeOfLife-10M.</li>
+    <li>30 epochs, AdamW, batch size 4096, learning rate 10<sup>−4</sup>, weight decay 0.2.</li>
+    <li>A single temperature parameter shared across all taxonomy levels.</li>
+    <li>Seven levels: kingdom, phylum, class, order, family, genus, species. The same prompt format is used for training and evaluation.</li>
+  </ul>
+</section>
+
+<section class="wrap" id="results">
+  <h2>Results</h2>
+  <p>We evaluate zero-shot classification on three benchmarks: <a href="https://github.com/visipedia/inat_comp/tree/master/2021">iNat21</a> (broad taxonomic coverage), <a href="https://huggingface.co/datasets/imageomics/rare-species">Rare Species</a> (rare, long-tailed species absent from TreeOfLife-10M) and <a href="https://huggingface.co/datasets/gmanolache/CrypticBio">CrypticBio</a> (visually ambiguous species). Baselines are OpenCLIP, <a href="https://huggingface.co/imageomics/bioclip">BioCLIP</a>, and <a href="https://huggingface.co/MVRL/rcme-tol-vit-base-patch16">RCME</a>, which also fine-tunes BioCLIP on TreeOfLife-10M.</p>
+
+  <div class="viz" id="viz">
+    <ul class="legend" aria-label="Legend">
+      <li><span class="key s1"></span>Ours · Euclidean</li>
+      <li><span class="key s2"></span>Ours · Hyperbolic</li>
+      <li><span class="key s3"></span>RCME</li>
+      <li><span class="key ref"></span>BioCLIP (starting point)</li>
+    </ul>
+    <div class="panels">
+      <div class="panel">
+        <h3>Each level predicted independently</h3>
+        <p>Top-1 accuracy (%) on iNat21</p>
+        <div class="plot" data-table="tbl-inat" role="img" aria-label="Line chart of top-1 accuracy by taxonomic level on iNat21, each level predicted independently. BioCLIP drops from 86 percent at kingdom to 27 percent at order before recovering to 51 percent at species. Our Euclidean model stays at or above 63 percent at every level; our hyperbolic model stays above 71 percent down to genus and reaches 51 percent at species. Exact values are in the table below."></div>
+      </div>
+      <div class="panel">
+        <h3>Top-down constrained inference</h3>
+        <p>Top-1 accuracy (%) on iNat21</p>
+        <div class="plot" data-table="tbl-topdown" role="img" aria-label="Line chart of top-1 accuracy by taxonomic level on iNat21 under top-down constrained inference. At species level BioCLIP reaches 4.8 percent, RCME 8.9 percent, our Euclidean model 33.6 percent and our hyperbolic model 36.9 percent. Exact values are in the table below."></div>
+      </div>
+    </div>
+    <p class="small" style="margin:10px 0 0">BioCLIP is strongest at kingdom, dips to 27% at order, and only partly recovers by species. Level-restricted training lifts the middle of the hierarchy, and under top-down inference, where one wrong step ruins everything below it, the gap widens with depth. OpenCLIP is left out of the chart for legibility and appears in the tables.</p>
+  </div>
+
+  <div class="tbl">
+    <table id="tbl-inat">
+      <caption><b>iNat21.</b> Per-level and average top-1 accuracy (%), each level predicted independently. Bold marks the best value in a column.</caption>
+      <thead><tr><th>Method</th><th>Space</th><th>Kingdom</th><th>Phylum</th><th>Class</th><th>Order</th><th>Family</th><th>Genus</th><th>Species</th><th class="avg">Avg.</th></tr></thead>
+      <tbody>
+        <tr data-series="OpenCLIP"><th>OpenCLIP</th><td>Euclidean</td><td class="lv">84.76</td><td class="lv">35.37</td><td class="lv">26.08</td><td class="lv">19.25</td><td class="lv">7.71</td><td class="lv">6.80</td><td class="lv">2.09</td><td class="avg">26.01</td></tr>
+        <tr data-series="BioCLIP"><th>BioCLIP</th><td>Euclidean</td><td class="lv">86.28</td><td class="lv">56.14</td><td class="lv">41.69</td><td class="lv">26.95</td><td class="lv">30.37</td><td class="lv">47.21</td><td class="lv">50.79</td><td class="avg">48.49</td></tr>
+        <tr data-series="RCME"><th>RCME</th><td>Euclidean</td><td class="lv">86.26</td><td class="lv">83.00</td><td class="lv">70.79</td><td class="lv">46.46</td><td class="lv">44.74</td><td class="lv">59.28</td><td class="lv">50.50</td><td class="avg">63.00</td></tr>
+        <tr class="ours" data-series="OursE"><th>Ours</th><td>Euclidean</td><td class="lv">98.85</td><td class="lv">98.39</td><td class="lv">67.23</td><td class="lv best">78.22</td><td class="lv">78.69</td><td class="lv">68.36</td><td class="lv best">63.00</td><td class="avg best">78.96</td></tr>
+        <tr class="ours" data-series="OursH"><th>Ours</th><td>Hyperbolic</td><td class="lv best">98.97</td><td class="lv best">98.48</td><td class="lv best">71.81</td><td class="lv">75.84</td><td class="lv best">82.25</td><td class="lv best">73.96</td><td class="lv">51.35</td><td class="avg">78.95</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tbl">
+    <table id="tbl-topdown">
+      <caption><b>iNat21, top-down constrained inference.</b> Per-level accuracy (%) and normalized LCA. Predictions proceed from coarse to fine with candidate labels restricted to valid descendants of the predicted parent, which enforces hierarchical consistency. Normalized LCA measures how deep predictions remain correct along the taxonomy.</caption>
+      <thead><tr><th>Method</th><th>Space</th><th>Kingdom</th><th>Phylum</th><th>Class</th><th>Order</th><th>Family</th><th>Genus</th><th>Species</th><th class="avg">nLCA</th></tr></thead>
+      <tbody>
+        <tr data-series="OpenCLIP"><th>OpenCLIP</th><td>Euclidean</td><td class="lv">84.76</td><td class="lv">30.44</td><td class="lv">10.62</td><td class="lv">3.81</td><td class="lv">0.78</td><td class="lv">0.28</td><td class="lv">0.12</td><td class="avg">0.19</td></tr>
+        <tr data-series="BioCLIP"><th>BioCLIP</th><td>Euclidean</td><td class="lv">75.38</td><td class="lv">61.34</td><td class="lv">48.22</td><td class="lv">16.85</td><td class="lv">9.71</td><td class="lv">6.73</td><td class="lv">4.80</td><td class="avg">0.32</td></tr>
+        <tr data-series="RCME"><th>RCME</th><td>Euclidean</td><td class="lv">86.27</td><td class="lv">78.46</td><td class="lv">63.97</td><td class="lv">29.59</td><td class="lv">18.25</td><td class="lv">13.00</td><td class="lv">8.92</td><td class="avg">0.43</td></tr>
+        <tr class="ours" data-series="OursE"><th>Ours</th><td>Euclidean</td><td class="lv">98.85</td><td class="lv">98.41</td><td class="lv">74.52</td><td class="lv">68.28</td><td class="lv">60.31</td><td class="lv">47.92</td><td class="lv">33.64</td><td class="avg">0.69</td></tr>
+        <tr class="ours" data-series="OursH"><th>Ours</th><td>Hyperbolic</td><td class="lv best">98.97</td><td class="lv best">98.53</td><td class="lv best">77.15</td><td class="lv best">69.03</td><td class="lv best">62.79</td><td class="lv best">52.64</td><td class="lv best">36.89</td><td class="avg best">0.71</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tbl">
+    <table id="tbl-rare">
+      <caption><b>Rare Species.</b> Per-level and average top-1 accuracy (%). These species are absent from the training set.</caption>
+      <thead><tr><th>Method</th><th>Space</th><th>Phylum</th><th>Class</th><th>Order</th><th>Family</th><th>Genus</th><th>Species</th><th class="avg">Avg.</th></tr></thead>
+      <tbody>
+        <tr><th>OpenCLIP</th><td>Euclidean</td><td>75.89</td><td>60.87</td><td>33.32</td><td>13.31</td><td>15.27</td><td>10.62</td><td class="avg">34.88</td></tr>
+        <tr><th>BioCLIP</th><td>Euclidean</td><td>68.35</td><td>65.16</td><td>54.63</td><td>40.01</td><td>47.43</td><td>31.82</td><td class="avg">51.23</td></tr>
+        <tr><th>RCME</th><td>Euclidean</td><td>82.38</td><td>81.67</td><td>69.01</td><td>44.12</td><td>50.95</td><td>35.58</td><td class="avg">60.62</td></tr>
+        <tr class="ours"><th>Ours</th><td>Euclidean</td><td class="best">98.19</td><td class="best">93.02</td><td>83.27</td><td>67.41</td><td>55.08</td><td>40.68</td><td class="avg">72.94</td></tr>
+        <tr class="ours"><th>Ours</th><td>Hyperbolic</td><td>97.99</td><td>92.64</td><td class="best">83.33</td><td class="best">69.06</td><td class="best">57.22</td><td class="best">43.20</td><td class="avg best">73.91</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tbl">
+    <table id="tbl-cryptic">
+      <caption><b>CrypticBio.</b> Per-level and average top-1 accuracy (%) on visually confusing species.</caption>
+      <thead><tr><th>Method</th><th>Space</th><th>Order</th><th>Family</th><th>Genus</th><th>Species</th><th class="avg">Avg.</th></tr></thead>
+      <tbody>
+        <tr><th>OpenCLIP</th><td>Euclidean</td><td>55.37</td><td>15.92</td><td>6.41</td><td>6.17</td><td class="avg">20.97</td></tr>
+        <tr><th>BioCLIP</th><td>Euclidean</td><td>81.34</td><td>39.29</td><td>37.71</td><td>36.72</td><td class="avg">48.77</td></tr>
+        <tr><th>RCME</th><td>Euclidean</td><td>90.11</td><td>49.84</td><td>39.45</td><td>38.97</td><td class="avg">54.59</td></tr>
+        <tr class="ours"><th>Ours</th><td>Euclidean</td><td class="best">97.98</td><td>72.65</td><td>46.30</td><td>40.37</td><td class="avg">64.33</td></tr>
+        <tr class="ours"><th>Ours</th><td>Hyperbolic</td><td>96.80</td><td class="best">78.01</td><td class="best">52.18</td><td class="best">49.98</td><td class="avg best">69.24</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>What the numbers say</h3>
+  <ul class="plain">
+    <li><b>Best average accuracy on every benchmark.</b> Against RCME, the best variant gains 15.96 points on iNat21, 13.29 on Rare Species and 14.65 on CrypticBio.</li>
+    <li><b>The largest gains are in the middle of the hierarchy</b> (order to genus), where a standard contrastive loss suffers most from cross-level ambiguity.</li>
+    <li><b>Species accuracy improves too</b>, even though training no longer focuses on the species level alone: 50.79% to 63.00% on iNat21 with the Euclidean model.</li>
+    <li><b>Predictions stay on the right branch.</b> Under top-down inference the hyperbolic model reaches nLCA 0.71 against 0.43 for RCME, and beats RCME by 44.54, 39.64 and 27.97 points at family, genus and species level.</li>
+    <li><b>The two spaces are complementary.</b> Euclidean is best on iNat21 and at iNat21 species level. Hyperbolic is best on Rare Species and CrypticBio and consistently better under top-down inference.</li>
+  </ul>
+
+  <h3>Hierarchy emerges in the text embedding space</h3>
+  <figure>
+    <img src="assets/tsne.png" width="1800" height="972" loading="lazy"
+         alt="Two t-SNE plots of text embeddings, BioCLIP on the left and our model on the right, with points colored by taxonomic level: kingdom, phylum, class, order, family, genus, species. In the BioCLIP plot, levels are scattered and partly mixed. In our plot, the points form an ordered progression from kingdom and phylum in one corner, through class and order, to family, genus and species in the opposite corner.">
+    <figcaption><b>t-SNE visualization of text embeddings.</b> For a target species we take its label at every level together with the sibling categories that share its higher-level taxonomy. Our method shows a clearer hierarchical structure and reduced cross-level mixing compared with BioCLIP.</figcaption>
+  </figure>
+</section>
+
+<section class="wrap" id="models">
+  <h2>Models</h2>
+  <p>Both checkpoints are released on Hugging Face under the MIT license and load with <a href="https://github.com/mlfoundations/open_clip">OpenCLIP</a>.</p>
+  <ul class="plain">
+    <li>BioCLIP-HC-Euclidean: <a href="https://huggingface.co/imageomics/bioclip-hc-euclidean">huggingface.co/imageomics/bioclip-hc-euclidean</a></li>
+    <li>BioCLIP-HC-Hyperbolic: <a href="https://huggingface.co/imageomics/bioclip-hc-hyperbolic">huggingface.co/imageomics/bioclip-hc-hyperbolic</a></li>
+  </ul>
+<pre><code>import open_clip
+
+model, preprocess_train, preprocess_val = open_clip.create_model_and_transforms(
+    "hf-hub:imageomics/bioclip-hc-euclidean")
+tokenizer = open_clip.get_tokenizer("hf-hub:imageomics/bioclip-hc-euclidean")</code></pre>
+  <p>For zero-shot classification at a given level, write each candidate as the cumulative taxonomy prefix used in training, for example <code>An image of Animalia, Chordata, Mammalia, Carnivora</code> for an order-level candidate, and compare the image only with candidates of that level. For hierarchically consistent output, predict top-down: choose the kingdom first, then restrict each following level to the children of the label just predicted. The hyperbolic model scores image–text pairs with the negative oxy-angle described above instead of cosine similarity.</p>
+</section>
+
+<section class="wrap" id="faq">
+  <h2>Questions and answers</h2>
+
+  <details open>
+    <summary>What is level-restricted contrastive learning?</summary>
+    <p>It is a CLIP-style training objective for hierarchical label spaces. Each image gets one text label per taxonomic level (kingdom through species), and the contrastive loss is computed separately at each level, so a label is only ever compared with other labels of the same level. The per-level losses are then averaged with equal weight.</p>
+  </details>
+  <details>
+    <summary>Why do CLIP-style models make hierarchically inconsistent predictions?</summary>
+    <p>Standard contrastive learning assumes a flat, mutually exclusive label space and treats every non-matching text as an equal negative. When labels from several taxonomic levels share one contrastive objective, semantically compatible labels, such as an ancestor of the true class, are pushed away as false negatives. A lion and a wolf differ at species and genus level but share the order Carnivora, so there is no consistent way to define negatives across levels.</p>
+  </details>
+  <details>
+    <summary>How is this different from RCME, MERU and other hyperbolic or entailment-based methods?</summary>
+    <p>Those approaches add geometry objectives or hierarchy-oriented architectures. Level-restricted contrastive learning changes only how negatives are defined in the contrastive objective, and it applies in both Euclidean and hyperbolic embedding spaces. Against RCME, which also fine-tunes BioCLIP on TreeOfLife-10M, the best variant is more than 13 points higher in average accuracy on iNat21, Rare Species and CrypticBio.</p>
+  </details>
+  <details>
+    <summary>Is hyperbolic space required?</summary>
+    <p>No. The Euclidean model reaches 78.96% average accuracy on iNat21 and the hyperbolic model 78.95%. The hyperbolic variant is stronger on Rare Species, CrypticBio and under top-down constrained inference (normalized LCA 0.71 versus 0.69).</p>
+  </details>
+  <details>
+    <summary>Does balancing all taxonomic levels hurt species-level accuracy?</summary>
+    <p>No. On iNat21, species-level top-1 accuracy rises from 50.79% for BioCLIP to 63.00% for the Euclidean model. Species accuracy also improves on Rare Species (31.82% to 43.20%) and CrypticBio (36.72% to 49.98%) with the hyperbolic model.</p>
+  </details>
+  <details>
+    <summary>How is hierarchical consistency measured?</summary>
+    <p>With top-down constrained inference: predictions run from coarse to fine, and at each level the candidates are restricted to valid descendants of the predicted parent, so an early mistake propagates to every level below. We also report normalized Lowest Common Ancestor (nLCA) depth, the depth at which the predicted and ground-truth taxonomic paths still agree, divided by the hierarchy depth.</p>
+  </details>
+  <details>
+    <summary>Does the method only apply to biology?</summary>
+    <p>The experiments in the paper are on biological taxonomies (TreeOfLife-10M for training; iNat21, Rare Species and CrypticBio for evaluation). The objective itself is written for any label taxonomy with <i>L</i> levels in which the labels within a level are mutually exclusive. Other domains have not been tested in this work.</p>
+  </details>
+  <details>
+    <summary>Where can I download the models?</summary>
+    <p>Both models are on Hugging Face under the MIT license: <a href="https://huggingface.co/imageomics/bioclip-hc-euclidean">imageomics/bioclip-hc-euclidean</a> and <a href="https://huggingface.co/imageomics/bioclip-hc-hyperbolic">imageomics/bioclip-hc-hyperbolic</a>. They load with OpenCLIP via the <code>hf-hub:</code> prefix.</p>
+  </details>
+</section>
+
+<section class="wrap" id="related">
+  <h2>How this relates to prior work</h2>
+  <ul class="plain">
+    <li><b>CLIP models for biodiversity</b> (BioCLIP, BioTrove, TaxaBind, BioCAP) reach strong species-level accuracy but are trained with contrastive objectives designed for flat label spaces. This work starts from BioCLIP and changes the objective.</li>
+    <li><b>Hyperbolic and entailment-based representation learning</b> (Poincaré and Lorentz embeddings, MERU, ATMG, radial hyperbolic embeddings, HypStructure, HyCoCLIP, RCME) imposes hierarchy through geometry-aware spaces or additional objectives. Here the question is whether hierarchical structure can emerge from the contrastive objective itself, without explicit guidance.</li>
+    <li><b>Hierarchical image classification</b> (B-CNN, HMCN, HRN, hierarchy-aware losses, label-aware and multi-level supervised contrastive learning) builds taxonomy into architectures or penalties. This work adds neither, and instead removes the mismatch between a flat contrastive loss and hierarchical labels.</li>
+  </ul>
+  <ul class="topics" aria-label="Topics">
+    <li>hierarchical classification</li>
+    <li>hierarchical consistency</li>
+    <li>contrastive learning</li>
+    <li>vision-language models</li>
+    <li>CLIP</li>
+    <li>zero-shot classification</li>
+    <li>fine-grained visual categorization</li>
+    <li>false negatives</li>
+    <li>taxonomy</li>
+    <li>hyperbolic embeddings</li>
+    <li>biodiversity</li>
+    <li>BioCLIP</li>
+    <li>TreeOfLife-10M</li>
+    <li>iNat21</li>
+  </ul>
+</section>
+
+<section class="wrap" id="cite">
+  <h2>Citation</h2>
+  <div class="cite">
+    <button class="btn" type="button" id="copy">Copy</button>
+<pre id="bibtex"><code>@article{tao2026beyondflatlabels,
+  title   = {Beyond Flat Labels: Level-Restricted Contrastive Learning for Hierarchical Fine-Grained Vision Classification},
+  author  = {Tao, Zhiyuan and Sastry, Srikumar and Thompson, Matthew J and Campolongo, Elizabeth G and Zhang, Net and Zhang, Ziheng and Lapp, Hilmar and Su, Yu and Berger-Wolf, Tanya and Jacobs, Nathan and Chao, Wei-Lun and Gu, Jianyang},
+  journal = {arXiv preprint arXiv:2606.21838},
+  year    = {2026},
+  note    = {Accepted to the CVPR 2026 FGVC Workshop}
+}</code></pre>
+  </div>
+  <h3>Acknowledgment</h3>
+  <p class="small">This work was supported by the U.S. National Science Foundation (OAC-2118240) and resources from the Ohio Supercomputer Center.</p>
+</section>
+
+</article>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Paper: <a href="https://arxiv.org/abs/2606.21838">arXiv:2606.21838</a> (CC BY 4.0) · DOI: <a href="https://doi.org/10.48550/arXiv.2606.21838">10.48550/arXiv.2606.21838</a> · Models: MIT license.</p>
+    <p>Machine-readable summary: <a href="llms.txt">llms.txt</a> · <a href="llms-full.txt">llms-full.txt</a>. Page last updated <time datetime="2026-10-03">3 October 2026</time>.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var LEVELS = ['Kingdom', 'Phylum', 'Class', 'Order', 'Family', 'Genus', 'Species'];
+  // drawn back to front
+  var SERIES = [
+    { id: 'BioCLIP', name: 'BioCLIP', cls: 'ref' },
+    { id: 'RCME', name: 'RCME', cls: 's3' },
+    { id: 'OursH', name: 'Ours · Hyperbolic', cls: 's2' },
+    { id: 'OursE', name: 'Ours · Euclidean', cls: 's1' }
+  ];
+  var NS = 'http://www.w3.org/2000/svg';
+
+  function el(name, attrs, parent) {
+    var n = document.createElementNS(NS, name);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  }
+
+  // the tables are the single source of truth for the plotted numbers
+  function readTable(id) {
+    var out = {};
+    document.querySelectorAll('#' + id + ' tbody tr[data-series]').forEach(function (tr) {
+      out[tr.dataset.series] = Array.prototype.map.call(tr.querySelectorAll('td.lv'), function (td) {
+        return parseFloat(td.textContent);
+      });
+    });
+    return out;
+  }
+
+  function draw(host) {
+    var data = readTable(host.dataset.table);
+    var W = host.clientWidth;
+    if (!W) return;
+    var H = Math.round(Math.max(230, Math.min(290, W * 0.66)));
+    var m = { l: 36, r: 24, t: 10, b: 26 };
+    var step = (W - m.l - m.r) / (LEVELS.length - 1);
+    var x = function (i) { return m.l + i * step; };
+    var y = function (v) { return m.t + (1 - v / 100) * (H - m.t - m.b); };
+
+    host.textContent = '';
+    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, height: H, 'aria-hidden': 'true' }, host);
+
+    [0, 25, 50, 75, 100].forEach(function (t) {
+      el('line', { x1: m.l, x2: W - m.r, y1: y(t), y2: y(t), 'class': t ? 'grid' : 'base' }, svg);
+      var tx = el('text', { x: m.l - 8, y: y(t) + 4, 'text-anchor': 'end' }, svg);
+      tx.textContent = t;
+    });
+    LEVELS.forEach(function (name, i) {
+      var tx = el('text', { x: x(i), y: H - 6, 'text-anchor': 'middle' }, svg);
+      tx.textContent = step < 54 ? name.slice(0, 3) : name;
+    });
+
+    var cross = el('line', { y1: m.t, y2: H - m.b, 'class': 'cross' }, svg);
+
+    SERIES.forEach(function (s) {
+      var v = data[s.id];
+      if (!v) return;
+      el('path', { d: v.map(function (d, i) { return (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(d).toFixed(1); }).join(''), 'class': 'ln ' + s.cls }, svg);
+      v.forEach(function (d, i) { el('circle', { cx: x(i), cy: y(d), r: 4, 'class': 'pt ' + s.cls }, svg); });
+    });
+
+    var tip = document.createElement('div');
+    tip.className = 'tip';
+    host.appendChild(tip);
+
+    function show(i) {
+      cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i));
+      cross.style.visibility = 'visible';
+      tip.textContent = '';
+      var h = document.createElement('b'); h.textContent = LEVELS[i]; tip.appendChild(h);
+      SERIES.filter(function (s) { return data[s.id]; })
+        .sort(function (a, b) { return data[b.id][i] - data[a.id][i]; })
+        .forEach(function (s) {
+          var row = document.createElement('div');
+          var dot = document.createElement('span'); dot.className = 'dot ' + s.cls;
+          var nm = document.createElement('span'); nm.textContent = s.name;
+          var val = document.createElement('span'); val.textContent = data[s.id][i].toFixed(2) + '%';
+          row.appendChild(dot); row.appendChild(nm); row.appendChild(val); tip.appendChild(row);
+        });
+      var tw = tip.offsetWidth;
+      var left = x(i) + 14;
+      if (left + tw > W) left = x(i) - 14 - tw;
+      tip.style.left = Math.max(0, left) + 'px';
+      tip.style.visibility = 'visible';
+    }
+    function hide() { cross.style.visibility = 'hidden'; tip.style.visibility = 'hidden'; }
+
+    host.onpointermove = host.onpointerdown = function (e) {
+      var px = e.clientX - host.getBoundingClientRect().left;
+      show(Math.max(0, Math.min(LEVELS.length - 1, Math.round((px - m.l) / step))));
+    };
+    host.onpointerleave = hide;
+  }
+
+  var plots = document.querySelectorAll('.plot');
+  var widths = new WeakMap();
+  function render(p) {
+    if (widths.get(p) === p.clientWidth) return;
+    widths.set(p, p.clientWidth);
+    draw(p);
+  }
+  plots.forEach(render);
+  if (window.ResizeObserver) {
+    var ro = new ResizeObserver(function (entries) { entries.forEach(function (e) { render(e.target); }); });
+    plots.forEach(function (p) { ro.observe(p); });
+  } else {
+    window.addEventListener('resize', function () { plots.forEach(render); });
+  }
+
+  var copy = document.getElementById('copy');
+  copy.addEventListener('click', function () {
+    var text = document.getElementById('bibtex').textContent;
+    (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(function () {
+      copy.textContent = 'Copied';
+      setTimeout(function () { copy.textContent = 'Copy'; }, 1600);
+    }).catch(function () {
+      var r = document.createRange(); r.selectNodeContents(document.getElementById('bibtex'));
+      var s = getSelection(); s.removeAllRanges(); s.addRange(r);
+    });
+  });
+})();
+</script>
+</body>
+</html>

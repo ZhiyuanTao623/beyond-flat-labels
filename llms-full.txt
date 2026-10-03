@@ -1,0 +1,164 @@
+# Beyond Flat Labels: Level-Restricted Contrastive Learning for Hierarchical Fine-Grained Vision Classification
+
+- Authors: Zhiyuan Tao (1), Srikumar Sastry (2), Matthew J Thompson (1), Elizabeth G Campolongo (1), Net Zhang (1), Ziheng Zhang (1), Hilmar Lapp (3), Yu Su (1), Tanya Berger-Wolf (1), Nathan Jacobs (2), Wei-Lun Chao (4), Jianyang Gu (1)
+- Affiliations: (1) The Ohio State University, (2) Washington University in St. Louis, (3) Neuromatch, (4) Boston University
+- Correspondence: tao.623@osu.edu, gu.1220@osu.edu
+- Venue: accepted to the CVPR 2026 FGVC Workshop
+- arXiv: https://arxiv.org/abs/2606.21838 (cs.CV, cs.LG; v1 20 June 2026, v2 28 September 2026)
+- DOI: https://doi.org/10.48550/arXiv.2606.21838
+- PDF: https://arxiv.org/pdf/2606.21838
+- Models: https://huggingface.co/imageomics/bioclip-hc-euclidean and https://huggingface.co/imageomics/bioclip-hc-hyperbolic (MIT license)
+- Paper license: CC BY 4.0
+
+## Summary
+
+CLIP-style models often predict a species whose genus, family or order contradicts what the same model predicts at those higher levels. The paper traces this to false negatives that appear when labels from different taxonomic levels share one contrastive objective, and fixes it by contrasting each label only against labels of the same level, with every level weighted equally. Fine-tuning BioCLIP this way on TreeOfLife-10M makes zero-shot predictions more accurate at every level and more consistent along the taxonomy, in both Euclidean and hyperbolic embedding spaces.
+
+Headline results:
+
+- iNat21 average top-1 accuracy over seven taxonomic levels: 78.96% (Euclidean) versus 48.49% for BioCLIP, a gain of 30.47 points.
+- iNat21 normalized LCA under top-down constrained inference: 0.71 (hyperbolic) versus 0.43 for RCME and 0.32 for BioCLIP.
+- Average accuracy over RCME, best variant: +15.96 points on iNat21, +13.29 on Rare Species, +14.65 on CrypticBio.
+
+## Abstract
+
+Multimodal contrastive learning has enabled zero-shot visual classification by aligning images with textual categories. However, in hierarchically structured label spaces, existing methods often produce predictions that are inconsistent across taxonomic levels. For example, a model may predict a fine-grained category whose parent category contradicts its simultaneously predicted higher-level label. By analysis, the issue originates from false negative labels when contrastive comparison involves multiple taxonomic levels. To this end, we propose to restrict contrastive comparisons to categories within the same taxonomic level. In addition, we adopt a group-balanced design, ensuring each taxonomic level receives adequate optimization. As a result, the proposed framework improves both hierarchical consistency and classification accuracy from coarse to fine granularity. We train our model with TreeOfLife-10M based on BioCLIP and evaluate it across multiple hierarchical classification benchmarks, where the model demonstrates significantly improved hierarchical consistency in both Euclidean and hyperbolic spaces. Notably, on iNaturalist 2021 (iNat21), our method improves average accuracy across levels by 30.47% over the baseline, highlighting its effectiveness for hierarchical zero-shot classification. We have released our Euclidean and hyperbolic models on HuggingFace.
+
+## The problem: a flat loss on a hierarchical label space
+
+Standard CLIP-style contrastive learning assumes labels are flat and mutually exclusive: an image and its own text form the positive pair, and every other text in the batch is an equal negative. Taxonomies break that assumption. A lion (Panthera leo) and a wolf (Canis lupus) are different species and different genera, yet both belong to the order Carnivora. Whether two samples should be pulled together or pushed apart depends on the level.
+
+When labels from several levels are mixed in one contrastive objective, there is no consistent way to define negatives. Labels that are semantically compatible with an image, such as its own ancestors, are pushed away as false negatives. The model receives conflicting supervision, and its predictions at different levels stop agreeing with each other.
+
+## Method: level-restricted contrastive learning
+
+Setup. A taxonomy has L levels from coarse to fine. Each image x_i has a taxonomic label (t_i^1, ..., t_i^L). The CLIP image encoder f gives an image embedding v_i. On the text side, each level gets a label that contains the taxonomy prefix up to that level, y_i^l = (t_i^1, ..., t_i^l), formatted as "An image of t^1, t^2, ..., t^l" (comma-separated), and the text encoder g gives z_i^l = g(y_i^l).
+
+Example for a gray wolf at the order level: "An image of Animalia, Chordata, Mammalia, Carnivora".
+
+1. Contrast only within a level. A separate contrastive loss is computed for each level, and each loss involves only that level's labels.
+2. Merge duplicate labels in the batch. At coarse levels many images in a mini-batch share a label. The labels of a level are deduplicated into a set K of unique text embeddings (|K| <= N, the batch size), and all image-text pairs sharing a label are positives, so a label is never both positive and negative.
+3. Balance the levels. The final loss is the plain average of the per-level losses, so fine-grained levels are not dominated by high-confidence coarse-level signals.
+
+Image-to-text loss at one level (level index omitted):
+
+```latex
+\mathcal{L}^{I\rightarrow T} = -\frac{1}{N}\sum_{i=1}^{N} \log \frac{\exp(\langle \mathbf{v}_i,\mathbf{z}_i\rangle/\tau)}{\sum_{\mathbf{z}_k \in \mathcal{K}} \exp(\langle \mathbf{v}_i,\mathbf{z}_k\rangle/\tau)}
+```
+
+Text-to-image loss, with P_k the set of images whose label is z_k and s_{jk} = <v_j, z_k>/tau:
+
+```latex
+\mathcal{L}^{T\rightarrow I} = -\frac{1}{|\mathcal{K}|}\sum_{\mathbf{z}_k \in \mathcal{K}} \frac{1}{|\mathcal{P}_k|}\sum_{\mathbf{v}_p \in \mathcal{P}_k} \log \frac{\exp(s_{pk})}{\sum_{j=1}^{N}\exp(s_{jk})}
+```
+
+Level objective and total objective:
+
+```latex
+\mathcal{L}_\ell = \mathcal{L}^{I\rightarrow T}_\ell + \mathcal{L}^{T\rightarrow I}_\ell, \qquad \mathcal{L} = \frac{1}{L}\sum_{\ell=1}^{L}\mathcal{L}_{\ell}
+```
+
+Hyperbolic variant. Lorentz (hyperboloid) model with fixed curvature c = 1. Encoder outputs are not L2-normalized; following MERU they are scaled by learnable scalars and lifted onto the manifold with the exponential map at the origin. Image-text similarity is the negative oxy-angle divided by the temperature; it replaces the inner product in both losses and is also used for zero-shot inference.
+
+Implementation details. Initialized from BioCLIP ViT-B/16 and fine-tuned on TreeOfLife-10M for 30 epochs with AdamW, batch size 4096, learning rate 1e-4, weight decay 0.2. A single temperature parameter is shared across all taxonomy levels. The same prompt format is used for training and evaluation.
+
+## Experiments
+
+Benchmarks: iNat21 (broad taxonomic coverage), Rare Species (rare and long-tailed species absent from TreeOfLife-10M), CrypticBio (visually ambiguous species). Baselines: OpenCLIP, BioCLIP, and RCME (which also fine-tunes BioCLIP on TreeOfLife-10M).
+
+Metrics: per-level top-1 accuracy and its average across levels. Hierarchical consistency is evaluated with top-down constrained inference, where predictions run from coarse to fine and the candidates at each level are restricted to valid descendants of the predicted parent, and with normalized Lowest Common Ancestor (nLCA) depth, the depth of agreement between the predicted and ground-truth taxonomic paths divided by the hierarchy depth L.
+
+### Table 1. iNat21, per-level and average top-1 accuracy (%)
+
+| Method | Space | Kingdom | Phylum | Class | Order | Family | Genus | Species | Avg. |
+|---|---|---|---|---|---|---|---|---|---|
+| OpenCLIP | Euclidean | 84.76 | 35.37 | 26.08 | 19.25 | 7.71 | 6.80 | 2.09 | 26.01 |
+| BioCLIP | Euclidean | 86.28 | 56.14 | 41.69 | 26.95 | 30.37 | 47.21 | 50.79 | 48.49 |
+| RCME | Euclidean | 86.26 | 83.00 | 70.79 | 46.46 | 44.74 | 59.28 | 50.50 | 63.00 |
+| Ours | Euclidean | 98.85 | 98.39 | 67.23 | 78.22 | 78.69 | 68.36 | 63.00 | 78.96 |
+| Ours | Hyperbolic | 98.97 | 98.48 | 71.81 | 75.84 | 82.25 | 73.96 | 51.35 | 78.95 |
+
+### Table 2. iNat21, top-down constrained inference: per-level accuracy (%) and normalized LCA
+
+| Method | Space | Kingdom | Phylum | Class | Order | Family | Genus | Species | nLCA |
+|---|---|---|---|---|---|---|---|---|---|
+| OpenCLIP | Euclidean | 84.76 | 30.44 | 10.62 | 3.81 | 0.78 | 0.28 | 0.12 | 0.19 |
+| BioCLIP | Euclidean | 75.38 | 61.34 | 48.22 | 16.85 | 9.71 | 6.73 | 4.80 | 0.32 |
+| RCME | Euclidean | 86.27 | 78.46 | 63.97 | 29.59 | 18.25 | 13.00 | 8.92 | 0.43 |
+| Ours | Euclidean | 98.85 | 98.41 | 74.52 | 68.28 | 60.31 | 47.92 | 33.64 | 0.69 |
+| Ours | Hyperbolic | 98.97 | 98.53 | 77.15 | 69.03 | 62.79 | 52.64 | 36.89 | 0.71 |
+
+### Table 3. Rare Species, per-level and average top-1 accuracy (%)
+
+| Method | Space | Phylum | Class | Order | Family | Genus | Species | Avg. |
+|---|---|---|---|---|---|---|---|---|
+| OpenCLIP | Euclidean | 75.89 | 60.87 | 33.32 | 13.31 | 15.27 | 10.62 | 34.88 |
+| BioCLIP | Euclidean | 68.35 | 65.16 | 54.63 | 40.01 | 47.43 | 31.82 | 51.23 |
+| RCME | Euclidean | 82.38 | 81.67 | 69.01 | 44.12 | 50.95 | 35.58 | 60.62 |
+| Ours | Euclidean | 98.19 | 93.02 | 83.27 | 67.41 | 55.08 | 40.68 | 72.94 |
+| Ours | Hyperbolic | 97.99 | 92.64 | 83.33 | 69.06 | 57.22 | 43.20 | 73.91 |
+
+### Table 4. CrypticBio, per-level and average top-1 accuracy (%)
+
+| Method | Space | Order | Family | Genus | Species | Avg. |
+|---|---|---|---|---|---|---|
+| OpenCLIP | Euclidean | 55.37 | 15.92 | 6.41 | 6.17 | 20.97 |
+| BioCLIP | Euclidean | 81.34 | 39.29 | 37.71 | 36.72 | 48.77 |
+| RCME | Euclidean | 90.11 | 49.84 | 39.45 | 38.97 | 54.59 |
+| Ours | Euclidean | 97.98 | 72.65 | 46.30 | 40.37 | 64.33 |
+| Ours | Hyperbolic | 96.80 | 78.01 | 52.18 | 49.98 | 69.24 |
+
+### Findings
+
+- The method achieves the best average accuracy on all three benchmarks. Compared with RCME, the best variant improves average accuracy by more than 13 points on each.
+- Gains are largest at intermediate levels (order to genus), where a standard contrastive loss suffers most from cross-level ambiguity.
+- Species-level accuracy also improves although optimization is not focused on the species level alone (iNat21: 50.79% for BioCLIP, 63.00% for the Euclidean model).
+- Under top-down constrained inference the hyperbolic variant reaches nLCA 0.71 versus 0.43 for RCME, and improves accuracy over RCME by 44.54, 39.64 and 27.97 points at family, genus and species level.
+- Euclidean and hyperbolic variants are complementary: Euclidean is better on iNat21 and has the highest iNat21 species accuracy; hyperbolic is better on Rare Species and CrypticBio, particularly at deeper levels, and consistently better in the top-down setting.
+- A t-SNE visualization of text embeddings shows a clearer hierarchical structure and less cross-level mixing than BioCLIP.
+
+## Using the released models
+
+```python
+import open_clip
+
+model, preprocess_train, preprocess_val = open_clip.create_model_and_transforms(
+    "hf-hub:imageomics/bioclip-hc-euclidean")
+tokenizer = open_clip.get_tokenizer("hf-hub:imageomics/bioclip-hc-euclidean")
+```
+
+Replace the repository name with `imageomics/bioclip-hc-hyperbolic` for the hyperbolic model. For zero-shot classification at a given level, write each candidate as the cumulative taxonomy prefix ("An image of Animalia, Chordata, Mammalia, Carnivora" for an order-level candidate) and compare the image only with candidates of that level. For hierarchically consistent output, predict top-down: choose the kingdom first, then restrict each following level to the children of the label just predicted. The hyperbolic model scores image-text pairs with the negative oxy-angle rather than cosine similarity.
+
+## Questions and answers
+
+**What is level-restricted contrastive learning?** A CLIP-style training objective for hierarchical label spaces. Each image gets one text label per taxonomic level, and the contrastive loss is computed separately at each level, so a label is only compared with other labels of the same level. The per-level losses are averaged with equal weight.
+
+**Why do CLIP-style models make hierarchically inconsistent predictions?** Standard contrastive learning assumes a flat, mutually exclusive label space and treats every non-matching text as an equal negative. When labels from several taxonomic levels share one objective, semantically compatible labels such as an ancestor of the true class are pushed away as false negatives.
+
+**How is this different from RCME, MERU and other hyperbolic or entailment-based methods?** Those approaches add geometry objectives or hierarchy-oriented architectures. This method changes only how negatives are defined in the contrastive objective, and it applies in both Euclidean and hyperbolic spaces.
+
+**Is hyperbolic space required?** No. The Euclidean model reaches 78.96% average accuracy on iNat21 and the hyperbolic model 78.95%. The hyperbolic variant is stronger on Rare Species, CrypticBio and under top-down inference (nLCA 0.71 versus 0.69).
+
+**Does balancing all levels hurt species-level accuracy?** No. iNat21 species accuracy rises from 50.79% (BioCLIP) to 63.00% (Euclidean). With the hyperbolic model, species accuracy rises from 31.82% to 43.20% on Rare Species and from 36.72% to 49.98% on CrypticBio.
+
+**Does the method only apply to biology?** The experiments are on biological taxonomies. The objective is written for any label taxonomy with L levels whose labels are mutually exclusive within a level. Other domains were not tested in this work.
+
+## Related work named in the paper
+
+- CLIP models for biodiversity: BioCLIP, BioTrove, TaxaBind, BioCAP.
+- Hyperbolic and entailment-based representation learning: Poincaré embeddings, Lorentz embeddings, MERU, ATMG, radial hyperbolic embeddings, HypStructure, HyCoCLIP, RCME.
+- Hierarchical image classification: B-CNN, HMCN, HRN, hierarchy-aware losses, label-aware and multi-level supervised contrastive learning.
+
+## Citation
+
+```bibtex
+@article{tao2026beyondflatlabels,
+  title   = {Beyond Flat Labels: Level-Restricted Contrastive Learning for Hierarchical Fine-Grained Vision Classification},
+  author  = {Tao, Zhiyuan and Sastry, Srikumar and Thompson, Matthew J and Campolongo, Elizabeth G and Zhang, Net and Zhang, Ziheng and Lapp, Hilmar and Su, Yu and Berger-Wolf, Tanya and Jacobs, Nathan and Chao, Wei-Lun and Gu, Jianyang},
+  journal = {arXiv preprint arXiv:2606.21838},
+  year    = {2026},
+  note    = {Accepted to the CVPR 2026 FGVC Workshop}
+}
+```
+
+Acknowledgment: supported by the U.S. National Science Foundation (OAC-2118240) and resources from the Ohio Supercomputer Center.

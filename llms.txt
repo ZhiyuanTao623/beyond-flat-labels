@@ -1,0 +1,38 @@
+# Beyond Flat Labels: Level-Restricted Contrastive Learning for Hierarchical Fine-Grained Vision Classification
+
+> Research paper (arXiv:2606.21838, accepted to the CVPR 2026 FGVC Workshop). CLIP-style vision-language models make predictions that contradict each other across taxonomic levels because labels from different levels act as false negatives in one flat contrastive objective. The paper restricts contrastive comparison to labels of the same taxonomic level and weights all levels equally. Fine-tuned from BioCLIP on TreeOfLife-10M, the resulting models raise average per-level zero-shot top-1 accuracy on iNat21 from 48.49% to 78.96% and normalized LCA under top-down inference from 0.32 to 0.71.
+
+Authors: Zhiyuan Tao, Srikumar Sastry, Matthew J Thompson, Elizabeth G Campolongo, Net Zhang, Ziheng Zhang, Hilmar Lapp, Yu Su, Tanya Berger-Wolf, Nathan Jacobs, Wei-Lun Chao, Jianyang Gu (The Ohio State University; Washington University in St. Louis; Neuromatch; Boston University).
+
+Key facts:
+
+- Problem: hierarchical inconsistency in zero-shot classification, for example a predicted species that does not belong to the predicted genus.
+- Cause: when labels from several taxonomic levels share one contrastive objective, semantically compatible labels (an image's ancestors, or labels of samples that share an ancestor) are treated as negatives.
+- Method: one text label per level built from the cumulative taxonomy prefix; a separate contrastive loss per level over that level's unique labels; all images sharing a label are positives; the per-level losses are averaged with equal weight.
+- Works in Euclidean space and in hyperbolic space (Lorentz model, oxy-angle similarity).
+- Released models: BioCLIP-HC-Euclidean and BioCLIP-HC-Hyperbolic (ViT-B/16, MIT license, load with OpenCLIP).
+- Compared with OpenCLIP, BioCLIP and RCME on iNat21, Rare Species and CrypticBio; best average accuracy on all three, more than 13 points above RCME on each.
+
+## Paper
+
+- [arXiv abstract](https://arxiv.org/abs/2606.21838): title, abstract, versions
+- [PDF](https://arxiv.org/pdf/2606.21838): full paper with supplementary material
+- [Full summary with all result tables and equations](llms-full.txt): plain Markdown, self-contained
+
+## Models
+
+- [BioCLIP-HC-Euclidean](https://huggingface.co/imageomics/bioclip-hc-euclidean): Euclidean embedding space
+- [BioCLIP-HC-Hyperbolic](https://huggingface.co/imageomics/bioclip-hc-hyperbolic): hyperbolic embedding space
+
+## Data and baselines
+
+- [TreeOfLife-10M](https://huggingface.co/datasets/imageomics/TreeOfLife-10M): training data
+- [iNat21](https://github.com/visipedia/inat_comp/tree/master/2021): evaluation benchmark, broad taxonomic coverage
+- [Rare Species](https://huggingface.co/datasets/imageomics/rare-species): evaluation benchmark, species absent from training
+- [CrypticBio](https://huggingface.co/datasets/gmanolache/CrypticBio): evaluation benchmark, visually confusing species
+- [BioCLIP](https://huggingface.co/imageomics/bioclip): starting checkpoint and baseline
+- [RCME](https://huggingface.co/MVRL/rcme-tol-vit-base-patch16): baseline
+
+## Citation
+
+Tao, Z., Sastry, S., Thompson, M. J., Campolongo, E. G., Zhang, N., Zhang, Z., Lapp, H., Su, Y., Berger-Wolf, T., Jacobs, N., Chao, W.-L., and Gu, J. "Beyond Flat Labels: Level-Restricted Contrastive Learning for Hierarchical Fine-Grained Vision Classification." arXiv:2606.21838, 2026. Accepted to the CVPR 2026 FGVC Workshop.
